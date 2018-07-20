@@ -1,0 +1,173 @@
+<html>
+<head>
+<script>
+
+var angle = 0;
+
+var vertices = 
+[
+	{x: 0, y: 1, z: 0, w: 1},
+	{x:-1, y:-1, z: 0, w: 1}, 
+	{x: 1, y:-1, z: 0, w: 1}	
+];
+
+function translation(T){
+	var m =
+	[
+		{x: 1, y: 0, z: 0, w: 0},
+		{x: 0, y: 1, z: 0, w: 0},
+		{x: 0, y: 0, z: 1, w: 0},
+		{x: T.x, y: T.y, z: T.z, w: 1}
+	];
+	return m;
+}
+
+function scale(S){
+	return
+	[
+		{x: S.x, y: 0, z: 0, w: 0},
+		{x: 0, y: S.y, z: 0, w: 0},
+		{x: 0, y: 0, z: S.z, w: 0},
+		{x: 0, y: 0, z: 0, w: 1}
+	];
+}
+
+function rotate_xAxis(theta){
+	return
+	[
+		{x: 1, y: 0, z: 0, w: 0},
+		{x: 0, y: Math.cos(theta), z: Math.sin(theta), w: 0},
+		{x: 0, y: -Math.sin(theta), z: Math.cos(theta), w: 0},
+		{x: 0, y: 0, z: 0, w: 1}
+	];
+}
+
+function rotate_yAxis(theta){
+	var m = 
+	[
+		{x: Math.cos(theta), y: 0, z: -Math.sin(theta), w: 0},
+		{x: 0, y: 1, z: 0, w: 0},
+		{x: Math.sin(theta), y: 0, z: Math.cos(theta), w: 0},
+		{x: 0, y: 0, z: 0, w: 1}
+	];
+	return m;
+}
+
+function rotate_zAxis(theta){
+	var m =
+	[
+		{x: Math.cos(theta), y: Math.sin(theta), z: 0, w: 0},
+		{x: -Math.sin(theta), y: Math.cos(theta), z: 0, w: 0},
+		{x: 0, y: 0, z: 1, w: 0},
+		{x: 0, y: 0, z: 0, w: 1}
+	];
+	return m;
+}
+
+function project(w, h, n, f){
+	var m = 
+	[
+		{x: 2*n/w, y: 0, z: 0, w: 0},
+		{x: 0, y: 2*n/h, z: 0, w: 0},
+		{x: 0, y: 0, z: (n+f)/(n-f), w: -1},
+		{x: 0, y: 0, z: (2*n*f)/(n-f), w: 0}
+	];
+	return m;
+}
+
+//returns the matrix product of m1 * m2
+function matMult(m1, m2){
+	var m =
+	[	
+		{x: (m1[0].x*m2[0].x + m1[0].y*m2[1].x + m1[0].z*m2[2].x + m1[0].w*m2[3].x),
+		 y: (m1[0].x*m2[0].y + m1[0].y*m2[1].y + m1[0].z*m2[2].y + m1[0].w*m2[3].y),
+		 z: (m1[0].x*m2[0].z + m1[0].y*m2[1].z + m1[0].z*m2[2].z + m1[0].w*m2[3].z),
+		 w: (m1[0].x*m2[0].w + m1[0].y*m2[1].w + m1[0].z*m2[2].w + m1[0].w*m2[3].w)},
+
+		 {x: (m1[1].x*m2[0].x + m1[1].y*m2[1].x + m1[1].z*m2[2].x + m1[1].w*m2[3].x),
+		 y: (m1[1].x*m2[0].y + m1[1].y*m2[1].y + m1[1].z*m2[2].y + m1[1].w*m2[3].y),
+		 z: (m1[1].x*m2[0].z + m1[1].y*m2[1].z + m1[1].z*m2[2].z + m1[1].w*m2[3].z),
+		 w: (m1[1].x*m2[0].w + m1[1].y*m2[1].w + m1[1].z*m2[2].w + m1[1].w*m2[3].w)},
+
+		 {x: (m1[2].x*m2[0].x + m1[2].y*m2[1].x + m1[2].z*m2[2].x + m1[2].w*m2[3].x),
+		 y: (m1[2].x*m2[0].y + m1[2].y*m2[1].y + m1[2].z*m2[2].y + m1[2].w*m2[3].y),
+		 z: (m1[2].x*m2[0].z + m1[2].y*m2[1].z + m1[2].z*m2[2].z + m1[2].w*m2[3].z),
+		 w: (m1[2].x*m2[0].w + m1[2].y*m2[1].w + m1[2].z*m2[2].w + m1[2].w*m2[3].w)},
+
+		 {x: (m1[3].x*m2[0].x + m1[3].y*m2[1].x + m1[3].z*m2[2].x + m1[3].w*m2[3].x),
+		 y: (m1[3].x*m2[0].y + m1[3].y*m2[1].y + m1[3].z*m2[2].y + m1[3].w*m2[3].y),
+		 z: (m1[3].x*m2[0].z + m1[3].y*m2[1].z + m1[3].z*m2[2].z + m1[3].w*m2[3].z),
+		 w: (m1[3].x*m2[0].w + m1[3].y*m2[1].w + m1[3].z*m2[2].w + m1[3].w*m2[3].w)}
+	];
+	return m;
+}
+
+function vectMult(v1, m1){
+	var m = {	
+		x: (v1.x*m1[0].x + v1.y*m1[1].x + v1.z*m1[2].x + v1.w*m1[3].x),
+		y: (v1.x*m1[0].y + v1.y*m1[1].y + v1.z*m1[2].y + v1.w*m1[3].y),
+		z: (v1.x*m1[0].z + v1.y*m1[1].z + v1.z*m1[2].z + v1.w*m1[3].z),
+		w: (v1.x*m1[0].w + v1.y*m1[1].w + v1.z*m1[2].w + v1.w*m1[3].w)
+	};
+	return m;
+}
+
+function draw(context){
+	context.fillStyle = "#404040"; //all red
+	context.fillRect(0,0,800,600);
+
+	//draw triagle
+	context.strokeStyle = "#FFFFFF";
+	vertices.forEach(function(v, index){
+
+		//transform from model to view to screen
+		var T = matMult(rotate_yAxis(angle), translation({x:0, y:0, z:3}));
+		var pPrime = vectMult(v,T);
+
+		pPrime.x = pPrime.x / pPrime.z;
+		pPrime.y = pPrime.y / pPrime.z;
+
+		pPrime.x = (pPrime.x + 1)*400;
+		pPrime.y = 600 - ((pPrime.y + 1)*300);
+
+		//set as next vertex in polygon
+		if(index == 0){
+			context.beginPath();
+			context.moveTo(pPrime.x, pPrime.y);
+		}
+		else	context.lineTo(pPrime.x, pPrime.y);
+
+	});
+	context.closePath();
+	context.stroke();
+}
+
+
+function update(){
+	angle += 0.1;
+}
+
+window.onload = function(){
+	var canvas = document.getElementById("render");
+	var context = canvas.getContext("2d");
+
+	setInterval(function(){
+		update();
+	},
+	100);
+
+	setInterval(function(){
+		draw(context);
+	},
+	30);
+};
+</script>
+</head>
+<body>
+<canvas id="render" width="800" height="600" border="1">
+</canvas>
+</body>
+</html>
+
+
+
